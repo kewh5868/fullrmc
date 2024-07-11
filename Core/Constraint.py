@@ -907,7 +907,9 @@ class Constraint(ListenerBase):
             fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
             fig.patch.set_facecolor('white')
             name = ' '.join(re.findall('[A-Z][^A-Z]*', self.__class__.__name__))
-            fig.canvas.set_window_title(name)
+            ## fig.canvas.set_window_title(name)
+            fig_manager = plt.get_current_fig_manager()
+            fig_manager.set_window_title(name)
         else:
             fig = axes.get_figure()
         # flatten axes representation and remove unused ones
@@ -1760,7 +1762,9 @@ class ExperimentalConstraint(Constraint):
             fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
             fig.patch.set_facecolor('white')
             name = ' '.join(re.findall('[A-Z][^A-Z]*', self.__class__.__name__))
-            fig.canvas.set_window_title(name)
+            ## fig.canvas.set_window_title(name)
+            fig_manager = plt.get_current_fig_manager()
+            fig_manager.set_window_title(name)
         else:
             fig = axes.get_figure()
         # flatten axes representation and remove unused ones
@@ -1886,7 +1890,10 @@ class ExperimentalConstraint(Constraint):
         # set title
         if len(titleFormat):
             name = ' '.join(re.findall('[A-Z][^A-Z]*', self.__class__.__name__))
-            FIG.canvas.set_window_title(name)
+            # FIG.canvas.set_window_title(name)
+            ## fig.canvas.set_window_title(name)
+            fig_manager = plt.get_current_fig_manager()
+            fig_manager.set_window_title(name)
             # format title
             title = titleFormat.format(frame=frame)
             AXES.set_title(title)

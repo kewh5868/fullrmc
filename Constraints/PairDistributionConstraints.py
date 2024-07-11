@@ -843,13 +843,15 @@ shapeFuncParams=sfp, windowFunction=wf, limits={limits})".format(name=name, klas
         totalPDF = self.get_constraint_value()["total"]
         self.set_standard_error(self.compute_standard_error(modelData = totalPDF))
 
-
     def __get_total_Gr(self, data, rho0):
         """ This method is created just to speed up the computation
         of the total gr upon fitting. _fittedScaleFactor get computed and
-        total Gr get scaled. Winhdow function will apply
+        total Gr get scaled. Window function will apply
         """
         # update shape function if needed
+        if self._shapeArray is None or self._shapeArray.shape != (self.__histogramSize,):
+            self._update_shape_array()  # Call the method to recompute the shape function
+
         # initialize Gr array
         Gr = np.zeros(self.__histogramSize, dtype=FLOAT_TYPE)
         for pair in self.__elementsPairs:
@@ -865,23 +867,26 @@ shapeFuncParams=sfp, windowFunction=wf, limits={limits})".format(name=name, klas
             idj = self.engine.elements.index(pair[1])
             # get Nij
             if idi == idj:
-                Nij = ni*(ni-1)/2.0
-                Dij = FLOAT_TYPE( Nij/self.engine.volume )
-                nij = data["intra"][idi,idj,:]+data["inter"][idi,idj,:]
-                Gr += wij*nij/Dij
+                Nij = ni * (ni - 1) / 2.0
+                Dij = FLOAT_TYPE(Nij / self.engine.volume)
+                nij = data["intra"][idi, idj, :] + data["inter"][idi, idj, :]
+                Gr += wij * nij / Dij
             else:
-                Nij = ni*nj
-                Dij = FLOAT_TYPE( Nij/self.engine.volume )
-                nij = data["intra"][idi,idj,:]+data["intra"][idj,idi,:] + data["inter"][idi,idj,:]+data["inter"][idj,idi,:]
-                Gr += wij*nij/Dij
+                Nij = ni * nj
+                Dij = FLOAT_TYPE(Nij / self.engine.volume)
+                nij = data["intra"][idi, idj, :] + data["intra"][idj, idi, :] + data["inter"][idi, idj, :] + data["inter"][idj, idi, :]
+                Gr += wij * nij / Dij
         # Divide by shells volume
         Gr /= self.shellVolumes
         # compute total G(r)
-        #rho0 = self.engine.numberDensity #(self.engine.numberOfAtoms/self.engine.volume).astype(FLOAT_TYPE)
-        Gr = (4.*PI*self.__shellCenters*rho0)*(Gr-1)
-        # remove shape function
+        Gr = (4. * PI * self.__shellCenters * rho0) * (Gr - 1)
+        
+        # Ensure Gr and self._shapeArray are the same dimension before subtraction
         if self._shapeArray is not None:
+            if self._shapeArray.shape != Gr.shape:
+                raise ValueError(f"Shape mismatch: Gr shape is {Gr.shape}, but _shapeArray shape is {self._shapeArray.shape}")
             Gr -= self._shapeArray
+
         # multiply by scale factor
         self._fittedScaleFactor = self.get_adjusted_scale_factor(self.experimentalPDF, Gr, self._usedDataWeights)
         if self._fittedScaleFactor != 1:

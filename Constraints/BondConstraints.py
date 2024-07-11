@@ -19,7 +19,7 @@ from ..Core.Collection import is_number, is_integer, raise_if_collected, reset_i
 from ..Core.Collection import get_caller_frames
 from ..Core.Constraint import Constraint, SingularConstraint, RigidConstraint
 from ..Core.bonds import full_bonds_coords
-
+from matplotlib.ticker import FixedLocator, FixedFormatter
 
 
 
@@ -693,22 +693,21 @@ class BondConstraint(RigidConstraint, SingularConstraint):
         # collect atom bondIndexes
         self._atomsCollector.collect(realIndex, dataDict={'map':BI})
 
-
-    def _plot(self,frameIndex, propertiesLUT,
-                   spacing,numberOfTicks,nbins,splitBy,
-                   ax, barsRelativeWidth,limitsParams,
-                   legendParams,titleParams,
-                   xticksParams, yticksParams,
-                   xlabelParams, ylabelParams,
-                   stackHorizontal, gridParams,
-                   colorCodeXticksLabels, *args, **kwargs):
+    def _plot(self, frameIndex, propertiesLUT,
+            spacing, numberOfTicks, nbins, splitBy,
+            ax, barsRelativeWidth, limitsParams,
+            legendParams, titleParams,
+            xticksParams, yticksParams,
+            xlabelParams, ylabelParams,
+            stackHorizontal, gridParams,
+            colorCodeXticksLabels, *args, **kwargs):
 
         # get needed data
-        frame                = propertiesLUT['frames-name'][frameIndex]
-        data                 = propertiesLUT['frames-data'][frameIndex]
-        standardError        = propertiesLUT['frames-standard_error'][frameIndex]
+        frame = propertiesLUT['frames-name'][frameIndex]
+        data = propertiesLUT['frames-data'][frameIndex]
+        standardError = propertiesLUT['frames-standard_error'][frameIndex]
         numberOfRemovedAtoms = propertiesLUT['frames-number_of_removed_atoms'][frameIndex]
-        # import matplotlib
+        
         import matplotlib.pyplot as plt
         # compute categories
         if splitBy == 'name':
@@ -717,135 +716,145 @@ class BondConstraint(RigidConstraint, SingularConstraint):
             splitBy = self.engine.get_original_data("allElements", frame=frame)
         else:
             splitBy = None
-        # check for angles
+        
         if not len(self.__bondsList[0]):
             LOGGER.warn("@{frm} no bonds found. It's even not defined or no atoms where found in definition.".format(frm=frame))
             return
-        # build categories
+        
         atom1 = self.__bondsList[0]
         atom2 = self.__bondsList[1]
         lower = self.__bondsList[2]
         upper = self.__bondsList[3]
         categories = {}
-        for idx in xrange(self.__bondsList[0].shape[0]):
-            #if self._atomsCollector.is_collected(idx):
-            #    continue
+        for idx in range(self.__bondsList[0].shape[0]):
             if self._atomsCollector.is_collected(atom1[idx]):
                 continue
             if self._atomsCollector.is_collected(atom2[idx]):
                 continue
             if splitBy is not None:
-                a1 = splitBy[ atom1[idx] ]
-                a2 = splitBy[ atom2[idx] ]
+                a1 = splitBy[atom1[idx]]
+                a2 = splitBy[atom2[idx]]
             else:
                 a1 = a2 = ''
-            l  = lower[idx]
-            u  = upper[idx]
-            k  = (a1,a2,l,u)
-            L  = categories.get(k, [])
+            l = lower[idx]
+            u = upper[idx]
+            k = (a1, a2, l, u)
+            L = categories.get(k, [])
             L.append(idx)
             categories[k] = L
+        
         ncategories = len(categories)
-        # start plotting
-        COLORS  = ["b",'g','r','c','y','m']
-        catKeys = sorted(categories, key=lambda x:x[2])
-        shifts  = [0]
-        xticks   = []
-        xticksL  = []
-        yticks   = []
-        yticksL  = []
+        
+        COLORS = ["b", 'g', 'r', 'c', 'y', 'm']
+        catKeys = sorted(categories, key=lambda x: x[2])
+        shifts = [0]
+        xticks = []
+        xticksL = []
+        yticks = []
+        yticksL = []
         ticksCol = []
+        
         for idx, key in enumerate(catKeys):
-            a1,a2, L,U  = key
-            label  = "%s%s%s(%.2f,%.2f)"%(a1,'-'*(len(a1)>0),a2,L,U)
-            col    = COLORS[idx%len(COLORS)]
-            idxs   = categories[key]
-            catd   = data["bondsLength"][idxs]
-            dmin   = np.min(catd)
-            dmax   = np.max(catd)
-            # append xticks labels
+            a1, a2, L, U = key
+            label = "%s%s%s(%.2f,%.2f)" % (a1, '-' * (len(a1) > 0), a2, L, U)
+            col = COLORS[idx % len(COLORS)]
+            idxs = categories[key]
+            catd = data["bondsLength"][idxs]
+            dmin = np.min(catd)
+            dmax = np.max(catd)
+            
             dmint = dmaxt = []
-            if dmin<L:
+            if dmin < L:
                 dmint = [dmin]
-            if dmax>U:
+            if dmax > U:
                 dmaxt = [dmax]
-            xticksL.extend( dmint + list(np.linspace(start=L,stop=U,num=numberOfTicks, endpoint=True)) + dmaxt )
-            # rescale histogram
+            xticksL.extend(dmint + list(np.linspace(start=L, stop=U, num=numberOfTicks, endpoint=True)) + dmaxt)
+            
             resc = dsh = 0
             if stackHorizontal:
-                resc   = min(L,np.min(catd)) - spacing # rescale to origin + spacing
-                catd  -= resc - shifts[-1] # shift to stack to the right of the last histogram
-                dmin   = np.min(catd)
-                dmax   = np.max(catd)
+                resc = min(L, np.min(catd)) - spacing
+                catd -= resc - shifts[-1]
+                dmin = np.min(catd)
+                dmax = np.max(catd)
                 dmint = dmaxt = []
-                L     -= resc - shifts[-1]
-                U     -= resc - shifts[-1]
-                dsh    = shifts[-1]
-            # append ticks positions
+                L -= resc - shifts[-1]
+                U -= resc - shifts[-1]
+                dsh = shifts[-1]
+            
             if len(dmint):
-                dmint = [dmin-resc+dsh]
+                dmint = [dmin - resc + dsh]
             if len(dmaxt):
-                dmaxt = [dmax-resc+dsh]
-            xticks.extend( dmint + list(np.linspace(start=L,stop=U,num=numberOfTicks, endpoint=True)) + dmaxt )
-            # append shifts
+                dmaxt = [dmax - resc + dsh]
+            xticks.extend(dmint + list(np.linspace(start=L, stop=U, num=numberOfTicks, endpoint=True)) + dmaxt)
+            
             if stackHorizontal:
-                shifts.append(max(dmax,U))
+                shifts.append(max(dmax, U))
                 bottom = None
             else:
                 bottom = shifts[-1]
-            # get data limits
-            #bins = _get_bins(dmin=dmin, dmax=dmax, boundaries=[L,U], nbins=nbins)
-            bins  = list(np.linspace(start=min(dmin,L),stop=max(dmax,U),num=nbins, endpoint=True))
-            D, _, P = ax.hist(x=catd, bins=bins,rwidth=barsRelativeWidth,
-                              bottom=bottom, color=col, label=label,
-                              histtype='bar')
-            # vertical lines
+            
+            bins = list(np.linspace(start=min(dmin, L), stop=max(dmax, U), num=nbins, endpoint=True))
+            D, _, P = ax.hist(x=catd, bins=bins, rwidth=barsRelativeWidth,
+                            bottom=bottom, color=col, label=label,
+                            histtype='bar')
+            
             lmp = limitsParams
-            if lmp.get('color',None) is None:
+            if lmp.get('color', None) is None:
                 lmp = copy.deepcopy(lmp)
                 lmp['color'] = col
             Y = max(D)
             B = 0 if stackHorizontal else shifts[-1]
-            ax.plot([L,L],[B,B+Y+0.1*Y], **lmp)
-            ax.plot([U,U],[B,B+Y+0.1*Y], **lmp)
+            ax.plot([L, L], [B, B + Y + 0.1 * Y], **lmp)
+            ax.plot([U, U], [B, B + Y + 0.1 * Y], **lmp)
             if not stackHorizontal:
-                shifts.append(shifts[-1]+Y+0.1*Y)
-                yticks.append(bottom+Y/2)
-                yticksL.append(Y/2)
-                yticks.append(B+Y)
+                shifts.append(shifts[-1] + Y + 0.1 * Y)
+                yticks.append(bottom + Y / 2)
+                yticksL.append(Y / 2)
+                yticks.append(B + Y)
                 yticksL.append(Y)
-            # adapt ticks color
-            ticksCol.extend([col]*(len(xticksL)-len(ticksCol)))
-        # update ticks
+            ticksCol.extend([col] * (len(xticksL) - len(ticksCol)))
+        
+        if len(xticks) > len(xticksL):
+            xticks = xticks[:len(xticksL)]
+        elif len(xticksL) > len(xticks):
+            xticksL = xticksL[:len(xticks)]
+        
         ax.set_xticks(xticks)
-        ax.set_xticklabels( ['%.2f'%t for t in xticksL], **xticksParams)
+        ax.xaxis.set_major_locator(FixedLocator(xticks))
+        ax.xaxis.set_major_formatter(FixedFormatter(['%.2f' % t for t in xticksL]))
+        
         if not stackHorizontal:
             ax.set_yticks(yticks)
-            ax.set_yticklabels( ['%i'%t for t in yticksL], **yticksParams)
+            ax.yaxis.set_major_locator(FixedLocator(yticks))
+            ax.yaxis.set_major_formatter(FixedFormatter(['%i' % t for t in yticksL]))
         else:
-            ax.set_yticklabels( ['%i'%t for t in ax.get_yticks()], **yticksParams)
+            yticks = ax.get_yticks()
+            ax.yaxis.set_major_locator(FixedLocator(yticks))
+            ax.yaxis.set_major_formatter(FixedFormatter(['%i' % t for t in yticks]))
+            ax.set_yticklabels(['%i' % t for t in yticks], **yticksParams)
+        
         if colorCodeXticksLabels:
             for ticklabel, tickcolor in zip(ax.get_xticklabels(), ticksCol):
                 ticklabel.set_color(tickcolor)
-        # plot legend
+        
         if legendParams is not None:
             ax.legend(**legendParams)
-        # grid parameters
+        
         if gridParams is not None:
             gp = copy.deepcopy(gridParams)
             axis = gp.pop('axis', 'both')
             if axis is None:
                 axis = 'x' if stackHorizontal else 'y'
             ax.grid(axis=axis, **gp)
-        # set axis labels
+        
         ax.set_xlabel(**xlabelParams)
         ax.set_ylabel(**ylabelParams)
-        # set title
+        
         if titleParams is not None:
             title = copy.deepcopy(titleParams)
-            label = title.pop('label',"").format(frame=frame,standardError=standardError, numberOfRemovedAtoms=numberOfRemovedAtoms,used=self.used)
+            label = title.pop('label', "").format(frame=frame, standardError=standardError,
+                                                numberOfRemovedAtoms=numberOfRemovedAtoms, used=self.used)
             ax.set_title(label=label, **title)
-
 
 
     def plot(self, spacing=0.1, numberOfTicks=3, nbins=20, barsRelativeWidth=0.95,
