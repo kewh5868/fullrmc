@@ -1606,72 +1606,187 @@ class ExperimentalConstraint(Constraint):
         return propertiesLUT
 
 
+    # def _plot(self, frame, output, experimentalX, experimentalY,
+    #                 shellCenters, shapeArray, numberOfRemovedAtoms,
+    #                 standardError, scaleFactor, multiframeWeight,
+    #                 # plotting arguments
+    #                 ax, intra=True, inter=True, totalNoWindow=False,
+    #                 xlabelParams=None,
+    #                 ylabelParams=None,
+    #                 legendParams=None,
+    #                 titleParams = "",
+    #                 expParams = {'label':"experimental","color":'red','marker':'o','markersize':7.5, 'markevery':1, 'zorder':0},
+    #                 totParams = {'label':"total", 'color':'black','linewidth':3.0, 'zorder':1},
+    #                 noWParams = {'label':"total - no window", 'color':'black','linewidth':1.0, 'zorder':1},
+    #                 shaParams = {'label':"shape function", 'color':'black','linewidth':1.0, 'linestyle':'dashed'},
+    #                 parParams = {'linewidth':1.0, 'markevery':5, 'markersize':5, 'zorder':-1},
+    #                 gridParams= None,
+    #                 show=True):
+    #     # import matplotlib
+    #     import matplotlib.pyplot as plt
+    #     # Create plotting styles
+    #     COLORS  = ["b",'g','c','y','m']
+    #     MARKERS = ["",'.','+','^','|']
+    #     INTRA_STYLES = [r[0] + r[1]for r in itertools.product(['--'], list(reversed(COLORS)))]
+    #     INTRA_STYLES = [r[0] + r[1]for r in itertools.product(MARKERS, INTRA_STYLES)]
+    #     INTER_STYLES = [r[0] + r[1]for r in itertools.product(['-'], COLORS)]
+    #     INTER_STYLES = [r[0] + r[1]for r in itertools.product(MARKERS, INTER_STYLES)]
+    #     # plot experimental
+    #     ax.plot(experimentalX,experimentalY, **expParams)
+    #     ax.plot(shellCenters, output["total"], **totParams )
+    #     if totalNoWindow and output["total_no_window"] is not None:
+    #         ax.plot(shellCenters, output["total_no_window"], **noWParams )
+    #     if shapeArray is not None:
+    #         ax.plot(shellCenters, shapeArray, **shaParams )
+    #     # plot partials
+    #     intraStyleIndex = 0
+    #     interStyleIndex = 0
+    #     for key in output:
+    #         val = output[key]
+    #         if key in ("total", "total_no_window"):
+    #             continue
+    #         elif "intra" in key and intra:
+    #             ax.plot(shellCenters, val, INTRA_STYLES[intraStyleIndex], label=key, **parParams )
+    #             intraStyleIndex+=1
+    #         elif "inter" in key and inter:
+    #             ax.plot(shellCenters, val, INTER_STYLES[interStyleIndex], label=key, **parParams )
+    #             interStyleIndex+=1
+    #     # plot legend
+    #     if legendParams is not None:
+    #         ax.legend(**legendParams)
+    #     # set title
+    #     # set title
+    #     if titleParams is not None:
+    #         title = copy.deepcopy(titleParams)
+    #         label = title.pop('label',"").format(frame=frame,
+    #                                              standardError=standardError,
+    #                                              numberOfRemovedAtoms=numberOfRemovedAtoms,
+    #                                              scaleFactor=scaleFactor,
+    #                                              used=self.used,
+    #                                              multiframeWeight=multiframeWeight)
+    #         ax.set_title(label=label, **title)
+
+    #     # set axis labels
+    #     if xlabelParams is not None:
+    #         ax.set_xlabel(**xlabelParams)
+    #     if ylabelParams is not None:
+    #         ax.set_ylabel(**ylabelParams)
+    #     # grid parameters
+    #     if gridParams is not None:
+    #         gp = copy.deepcopy(gridParams)
+    #         axis = gp.pop('axis', 'both')
+    #         if axis is None:
+    #             axis = 'both'
+    #         ax.grid(axis=axis, **gp)
+
+    ## UPDATED: 09/04/24 - Trim the input Q-Values to match the length of model, from model-experiment mismatch
+    ## in the StructureFactorConstraints compute_standard_error
+
     def _plot(self, frame, output, experimentalX, experimentalY,
-                    shellCenters, shapeArray, numberOfRemovedAtoms,
-                    standardError, scaleFactor, multiframeWeight,
-                    # plotting arguments
-                    ax, intra=True, inter=True, totalNoWindow=False,
-                    xlabelParams=None,
-                    ylabelParams=None,
-                    legendParams=None,
-                    titleParams = "",
-                    expParams = {'label':"experimental","color":'red','marker':'o','markersize':7.5, 'markevery':1, 'zorder':0},
-                    totParams = {'label':"total", 'color':'black','linewidth':3.0, 'zorder':1},
-                    noWParams = {'label':"total - no window", 'color':'black','linewidth':1.0, 'zorder':1},
-                    shaParams = {'label':"shape function", 'color':'black','linewidth':1.0, 'linestyle':'dashed'},
-                    parParams = {'linewidth':1.0, 'markevery':5, 'markersize':5, 'zorder':-1},
-                    gridParams= None,
-                    show=True):
-        # import matplotlib
+            shellCenters, shapeArray, numberOfRemovedAtoms,
+            standardError, scaleFactor, multiframeWeight,
+            # plotting arguments
+            ax, intra=True, inter=True, totalNoWindow=False,
+            xlabelParams=None,
+            ylabelParams=None,
+            legendParams=None,
+            titleParams = "",
+            expParams = {'label':"experimental","color":'red','marker':'o','markersize':7.5, 'markevery':1, 'zorder':0},
+            totParams = {'label':"total", 'color':'black','linewidth':3.0, 'zorder':1},
+            noWParams = {'label':"total - no window", 'color':'black','linewidth':1.0, 'zorder':1},
+            shaParams = {'label':"shape function", 'color':'black','linewidth':1.0, 'linestyle':'dashed'},
+            parParams = {'linewidth':1.0, 'markevery':5, 'markersize':5, 'zorder':-1},
+            gridParams= None,
+            show=True):
+
         import matplotlib.pyplot as plt
-        # Create plotting styles
-        COLORS  = ["b",'g','c','y','m']
-        MARKERS = ["",'.','+','^','|']
-        INTRA_STYLES = [r[0] + r[1]for r in itertools.product(['--'], list(reversed(COLORS)))]
-        INTRA_STYLES = [r[0] + r[1]for r in itertools.product(MARKERS, INTRA_STYLES)]
-        INTER_STYLES = [r[0] + r[1]for r in itertools.product(['-'], COLORS)]
-        INTER_STYLES = [r[0] + r[1]for r in itertools.product(MARKERS, INTER_STYLES)]
-        # plot experimental
-        ax.plot(experimentalX,experimentalY, **expParams)
-        ax.plot(shellCenters, output["total"], **totParams )
-        if totalNoWindow and output["total_no_window"] is not None:
-            ax.plot(shellCenters, output["total_no_window"], **noWParams )
+        import itertools
+        import copy
+
+        # Helper function to trim mismatched arrays and notify the user
+        def trim_mismatched_arrays(x, y, name_x="x", name_y="y"):
+            if len(x) > len(y):
+                print(f"Trimming {name_x} from length {len(x)} to {len(y)} to match {name_y}.")
+                return x[:len(y)], y
+            elif len(y) > len(x):
+                print(f"Trimming {name_y} from length {len(y)} to {len(x)} to match {name_x}.")
+                return x, y[:len(x)]
+            else:
+                return x, y
+
+        # Trim experimental data (X and Y) if their lengths differ
+        experimentalX, experimentalY = trim_mismatched_arrays(experimentalX, experimentalY, "experimentalX", "experimentalY")
+
+        # Trim shellCenters and output["total"] if necessary
+        shellCenters, output["total"] = trim_mismatched_arrays(shellCenters, output["total"], "shellCenters", "output[\"total\"]")
+
+        # Handle optional "total_no_window" case
+        if totalNoWindow and output.get("total_no_window") is not None:
+            shellCenters, output["total_no_window"] = trim_mismatched_arrays(shellCenters, output["total_no_window"], "shellCenters", "output[\"total_no_window\"]")
+
+        # Handle optional shapeArray
         if shapeArray is not None:
-            ax.plot(shellCenters, shapeArray, **shaParams )
-        # plot partials
+            shellCenters, shapeArray = trim_mismatched_arrays(shellCenters, shapeArray, "shellCenters", "shapeArray")
+
+        # Create plotting styles
+        COLORS  = ["b", 'g', 'c', 'y', 'm']
+        MARKERS = ["", '.', '+', '^', '|']
+        INTRA_STYLES = [r[0] + r[1] for r in itertools.product(['--'], list(reversed(COLORS)))]
+        INTRA_STYLES = [r[0] + r[1] for r in itertools.product(MARKERS, INTRA_STYLES)]
+        INTER_STYLES = [r[0] + r[1] for r in itertools.product(['-'], COLORS)]
+        INTER_STYLES = [r[0] + r[1] for r in itertools.product(MARKERS, INTER_STYLES)]
+
+        # Plot experimental data
+        ax.plot(experimentalX, experimentalY, **expParams)
+        
+        # Plot total output
+        ax.plot(shellCenters, output["total"], **totParams)
+        
+        # Plot total_no_window if it exists
+        if totalNoWindow and output.get("total_no_window") is not None:
+            ax.plot(shellCenters, output["total_no_window"], **noWParams)
+        
+        # Plot shapeArray if it exists
+        if shapeArray is not None:
+            ax.plot(shellCenters, shapeArray, **shaParams)
+
+        # Plot partials (intra and inter)
         intraStyleIndex = 0
         interStyleIndex = 0
-        for key in output:
-            val = output[key]
+        for key, val in output.items():
             if key in ("total", "total_no_window"):
                 continue
             elif "intra" in key and intra:
-                ax.plot(shellCenters, val, INTRA_STYLES[intraStyleIndex], label=key, **parParams )
-                intraStyleIndex+=1
+                shellCenters, val = trim_mismatched_arrays(shellCenters, val, "shellCenters", f"output[\"{key}\"]")
+                ax.plot(shellCenters, val, INTRA_STYLES[intraStyleIndex], label=key, **parParams)
+                intraStyleIndex += 1
             elif "inter" in key and inter:
-                ax.plot(shellCenters, val, INTER_STYLES[interStyleIndex], label=key, **parParams )
-                interStyleIndex+=1
-        # plot legend
+                shellCenters, val = trim_mismatched_arrays(shellCenters, val, "shellCenters", f"output[\"{key}\"]")
+                ax.plot(shellCenters, val, INTER_STYLES[interStyleIndex], label=key, **parParams)
+                interStyleIndex += 1
+
+        # Plot legend
         if legendParams is not None:
             ax.legend(**legendParams)
-        # set title
-        # set title
+
+        # Set title
         if titleParams is not None:
             title = copy.deepcopy(titleParams)
-            label = title.pop('label',"").format(frame=frame,
-                                                 standardError=standardError,
-                                                 numberOfRemovedAtoms=numberOfRemovedAtoms,
-                                                 scaleFactor=scaleFactor,
-                                                 used=self.used,
-                                                 multiframeWeight=multiframeWeight)
+            label = title.pop('label', "").format(frame=frame,
+                                                standardError=standardError,
+                                                numberOfRemovedAtoms=numberOfRemovedAtoms,
+                                                scaleFactor=scaleFactor,
+                                                used=self.used,
+                                                multiframeWeight=multiframeWeight)
             ax.set_title(label=label, **title)
 
-        # set axis labels
+        # Set axis labels
         if xlabelParams is not None:
             ax.set_xlabel(**xlabelParams)
         if ylabelParams is not None:
             ax.set_ylabel(**ylabelParams)
-        # grid parameters
+
+        # Grid parameters
         if gridParams is not None:
             gp = copy.deepcopy(gridParams)
             axis = gp.pop('axis', 'both')

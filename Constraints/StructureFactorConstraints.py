@@ -761,6 +761,66 @@ shapeFuncParams=sfp, windowFunction=wf, limits={limits})".format(name=name, klas
             #. standardError (number): The calculated constraint's
                standardError.
         """
+        
+        ''' # KW (09/04/24) Testing shapes of model and experimental data arrays...
+        ## - NOTE: There is a mismatch in array sizes between the model and experiment here...
+        # print("Shape of experimentalSF:", self.__experimentalSF.shape)
+        # print("Shape of modelData:", modelData.shape)
+
+        # # Optionally print part of the arrays if they are too large
+        # print("First few elements of experimentalSF:", self.__experimentalSF[:10])
+        # print("First few elements of modelData:", modelData[:10])
+
+        # # Compare the start of the arrays
+        # print("First value of experimentalSF:", self.__experimentalSF[0])
+        # print("First value of modelData:", modelData[0])
+
+        # # Compare the end of the arrays
+        # print("Last value of experimentalSF:", self.__experimentalSF[-1])
+        # print("Last value of modelData:", modelData[-1])
+
+        # Trimming first/last element as comparison for which is best fit.
+        if len(modelData) > len(self.__experimentalSF):
+            # Option 1: Trim the last element from modelData
+            trimmed_modelData = modelData[:len(self.__experimentalSF)]
+            print("Comparing after trimming the last element from modelData...")
+            print("First value of trimmed_modelData:", trimmed_modelData[0])
+            print("Last value of trimmed_modelData:", trimmed_modelData[-1])
+
+            # Option 2: Trim the first element from modelData
+            trimmed_modelData_first = modelData[1:]
+            if len(trimmed_modelData_first) == len(self.__experimentalSF):
+                print("Comparing after trimming the first element from modelData...")
+                print("First value of trimmed_modelData_first:", trimmed_modelData_first[0])
+                print("Last value of trimmed_modelData_first:", trimmed_modelData_first[-1])
+
+            # Compare and decide based on which aligns better
+            # Implement logic to automatically choose the better trimming option
+            if abs(trimmed_modelData[0] - self.__experimentalSF[0]) < abs(trimmed_modelData_first[0] - self.__experimentalSF[0]):
+                print("Trimming last element provides better alignment.")
+                modelData = trimmed_modelData
+            else:
+                print("Trimming first element provides better alignment.")
+                modelData = trimmed_modelData_first
+        else:
+            print("No trimming needed.")
+        '''
+
+        # Check if modelData is longer than experimentalSF
+        if len(modelData) > len(self.__experimentalSF):
+            print(f"Trimming last element from modelData...")
+
+            # Trim the last element from modelData
+            trimmed_modelData = modelData[:len(self.__experimentalSF)]
+
+            # Assign trimmed data to modelData for further use
+            modelData = trimmed_modelData
+        else:
+            print("No trimming needed. Lengths already match.")
+
+        # Now the two arrays can be used together without broadcasting errors
+        diff = self.__experimentalSF - modelData
+
         # compute difference
         diff = self.__experimentalSF-modelData
         # return standard error
